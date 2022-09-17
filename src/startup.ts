@@ -1,11 +1,11 @@
 import { Firebot } from '@crowbartools/firebot-custom-scripts-types';
 
-interface Params {
+export interface StartupParams {
 	identifier: string;
 	action: string;
 }
 
-const script: Firebot.CustomScript<Params> = {
+const script: Firebot.CustomScript<StartupParams> = {
 	getScriptManifest: () => {
 		return {
 			name: 'firebot-queue',
@@ -32,13 +32,10 @@ const script: Firebot.CustomScript<Params> = {
 		};
 	},
 	run: (runRequest) => {
-		const { customVariableManager: cvMgr, logger } = runRequest.modules;
-		const action = cvMgr.getCustomVariable(runRequest.parameters.action);
-		switch (action) {
-			case 'join':
-				break;
-			default:
-				logger.error('firebot-queue: Queue action did not match any known actions');
+		if (runRequest.trigger.type === 'startup_script') {
+			//
+		} else {
+			runRequest.modules.logger.error('firebot-queue: The startup script was called from a non-startup trigger');
 		}
 	},
 };
