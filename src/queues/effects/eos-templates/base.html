@@ -1,0 +1,24 @@
+<eos-container header="Queue Identifier">
+  <p class="muted">Optional: If left blank the default queue will be used</p>
+  <input
+    type="text"
+    ng-model="effect.queue"
+    class="form-control"
+    name="queue"
+    placeholder="Queue Identifier"
+    replace-variables
+    menu-position="under"
+  />
+</eos-container>
+<eos-container header="Queue Identifier" pad-top="true">
+  <p class="muted">Optional: If left blank the user triggering the event will be added to the queue</p>
+  <input
+    type="text"
+    ng-model="effect.user"
+    class="form-control"
+    name="user"
+    placeholder="User to add to the queue"
+    replace-variables
+    menu-position="under"
+  />
+</eos-container>

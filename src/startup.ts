@@ -1,41 +1,50 @@
 import { Firebot } from '@crowbartools/firebot-custom-scripts-types';
+import { QueueJoinEffect } from './queues/effects/join';
+import { QueueManager } from './queues/queue-manager';
 
 export interface StartupParams {
-	identifier: string;
-	action: string;
+	defaultQueue: string;
 }
+
+let queueManager;
 
 const script: Firebot.CustomScript<StartupParams> = {
 	getScriptManifest: () => {
 		return {
-			name: 'firebot-queue',
-			description: 'A customizable queue tool for streamers',
+			name: 'firebot-queue-startup',
+			description: 'A customizable queue tool for streamers, startup script',
 			author: 'pxslip',
 			version: '1.0',
 			firebotVersion: '5',
+			startupOnly: true,
 		};
 	},
 	getDefaultParameters: () => {
 		return {
-			identifier: {
+			defaultQueue: {
 				type: 'string',
 				default: 'default',
-				description: 'Queue Identifier',
-				secondaryDescription: 'To manage multiple queues use a different queue name for each',
-			},
-			action: {
-				type: 'string',
-				default: 'fbqAction',
-				description:
-					"The name of the internal action identifier the script will use, only change this if you know what you're doing!",
+				description: 'Default queue name',
+				secondaryDescription:
+					'The default queue that will be used by all queue operations, this can be overridden in effects',
 			},
 		};
 	},
 	run: (runRequest) => {
-		if (runRequest.trigger.type === 'startup_script') {
-			//
+		if (runRequest.trigger.type === undefined) {
+			// interestingly startup scripts receive null as the trigger, not startup_script
+			// spin up the queue manager
+			queueManager = new QueueManager(runRequest.modules.fs, runRequest.modules.userDb);
+			// register effects
+			runRequest.modules.effectManager.registerEffect(
+				new QueueJoinEffect(runRequest.parameters, runRequest.modules.logger, queueManager),
+			);
 		} else {
-			runRequest.modules.logger.error('firebot-queue: The startup script was called from a non-startup trigger');
+			runRequest.modules.logger.error(
+				`firebot-queue: The startup script was called from a non-startup trigger (${JSON.stringify(
+					runRequest.trigger,
+				)})`,
+			);
 		}
 	},
 };
