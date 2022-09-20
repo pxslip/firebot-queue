@@ -23,7 +23,12 @@ export class Queue {
 	}
 
 	remove(user: FirebotUser) {
-		this.#queue = this.#queue.filter((value) => value._id !== user._id);
+		try {
+			this.#queue = this.#queue.filter((value) => value._id !== user._id);
+			return true;
+		} catch (exc) {
+			return false;
+		}
 	}
 
 	position(user: FirebotUser) {

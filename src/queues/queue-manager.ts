@@ -2,7 +2,7 @@
  * Class to handle the actual management of the queue
  */
 
-import { UserDb } from '@crowbartools/firebot-custom-scripts-types/types/modules/user-db';
+import { FirebotUser, UserDb } from '@crowbartools/firebot-custom-scripts-types/types/modules/user-db';
 import { FirebotQueue } from '../../types';
 import { Queue } from './queue';
 
@@ -16,11 +16,18 @@ export class QueueManager {
 		this.#userDb = userDb;
 	}
 
-	getQueue(name: string) {
+	listQueues() {
+		return Object.keys(QueueManager.#queues);
+	}
+
+	getQueue(name: string): Queue {
+		if (!QueueManager.#queues[name]) {
+			QueueManager.#queues[name] = new Queue(name, this.#fs);
+		}
 		return QueueManager.#queues[name];
 	}
 
-	async getFirebotUser(user: string) {
+	async getFirebotUser(user: string): Promise<FirebotUser> {
 		return await this.#userDb.getTwitchUserByUsername(user);
 	}
 }

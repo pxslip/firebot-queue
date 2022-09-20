@@ -1,9 +1,7 @@
 import { Firebot } from '@crowbartools/firebot-custom-scripts-types';
 import { Effects, EffectTriggerResponse } from '@crowbartools/firebot-custom-scripts-types/types/effects';
-import { Logger } from '@crowbartools/firebot-custom-scripts-types/types/modules/logger';
 import { FirebotQueue } from '../../../types';
-import { StartupParams } from '../../startup';
-import { QueueManager } from '../queue-manager';
+import { QueueEffect } from './effect';
 import optionsTemplate from './eos-templates/base.html';
 
 interface QueueLeaveEffectModel {
@@ -11,22 +9,13 @@ interface QueueLeaveEffectModel {
 	user: string;
 }
 
-export class QueueLeaveEffect implements Firebot.EffectType<QueueLeaveEffectModel> {
-	#defaultQueue: string;
-	#logger: Logger;
-	#queueManager: QueueManager;
-	constructor({ defaultQueue }: StartupParams, logger: Logger, queueManager: QueueManager) {
-		this.#defaultQueue = defaultQueue;
-		this.#logger = logger;
-		this.#queueManager = queueManager;
-	}
-
+export class QueueLeaveEffect extends QueueEffect implements Firebot.EffectType<QueueLeaveEffectModel> {
 	get definition() {
 		return {
 			id: 'pxslip:queue-leave',
 			name: 'Leave Queue',
 			description: 'Removes a user from a queue',
-			icon: 'fad fad-user-minus',
+			icon: 'fad fa-user-minus',
 			categories: ['chat based', 'common'] as Effects.EffectCategory[],
 			dependencies: ['chat'] as 'chat'[],
 		};
@@ -45,10 +34,13 @@ export class QueueLeaveEffect implements Firebot.EffectType<QueueLeaveEffectMode
 			user = event.trigger.metadata.username;
 		}
 		if (!queue) {
-			queue = this.#defaultQueue;
+			queue = this.defaultQueue;
 		}
-		const fbUser = await this.#queueManager.getFirebotUser(user);
-		this.#queueManager.getQueue(queue).remove(fbUser);
+		const fbUser = await this.queueManager.getFirebotUser(user);
+		const success = this.queueManager.getQueue(queue).remove(fbUser);
+		if (success) {
+			this.chat.sendChatMessage(`${user} was removed from the queue`);
+		}
 		// returning true allows Firebot to continue to the next effect in the queue
 		return true;
 	}

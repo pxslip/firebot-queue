@@ -1,32 +1,21 @@
 import { Firebot } from '@crowbartools/firebot-custom-scripts-types';
 import { Effects, EffectTriggerResponse } from '@crowbartools/firebot-custom-scripts-types/types/effects';
-import { Logger } from '@crowbartools/firebot-custom-scripts-types/types/modules/logger';
 import { FirebotQueue } from '../../../types';
-import { QueueManager } from '../queue-manager';
-import { StartupParams } from '../../startup';
 import optionsTemplate from './eos-templates/base.html';
+import { QueueEffect } from './effect';
 
 interface QueueJoinEffectModel {
 	queue: string;
 	user: string;
 }
 
-export class QueueJoinEffect implements Firebot.EffectType<QueueJoinEffectModel> {
-	#defaultQueue: string;
-	#logger: Logger;
-	#queueManager: QueueManager;
-	constructor({ defaultQueue }: StartupParams, logger: Logger, queueManager: QueueManager) {
-		this.#defaultQueue = defaultQueue;
-		this.#logger = logger;
-		this.#queueManager = queueManager;
-	}
-
+export class QueueJoinEffect extends QueueEffect implements Firebot.EffectType<QueueJoinEffectModel> {
 	get definition() {
 		return {
 			id: 'pxslip:queue-join',
 			name: 'Join Queue',
 			description: 'Add a user to a queue, self-add or manually',
-			icon: 'fad fad-user-plus',
+			icon: 'fad fa-user-plus',
 			categories: ['chat based', 'common'] as Effects.EffectCategory[],
 			dependencies: ['chat'] as 'chat'[],
 		};
@@ -45,10 +34,17 @@ export class QueueJoinEffect implements Firebot.EffectType<QueueJoinEffectModel>
 			user = event.trigger.metadata.username;
 		}
 		if (!queue) {
-			queue = this.#defaultQueue;
+			queue = this.defaultQueue;
 		}
-		const fbUser = await this.#queueManager.getFirebotUser(user);
-		this.#queueManager.getQueue(queue).push(fbUser);
+		const fbUser = await this.queueManager.getFirebotUser(user);
+		const success = this.queueManager.getQueue(queue).push(fbUser);
+		if (success) {
+			this.chat.sendChatMessage(
+				`${user}, you were added to the queue at position ${this.queueManager.getQueue(queue).length}`,
+			);
+		} else {
+			this.chat.sendChatMessage(`Huh, there was an error adding you to the queue ${user}. Contact a mod for help`);
+		}
 		// returning true allows Firebot to continue to the next effect in the queue
 		return true;
 	}
